@@ -106,7 +106,7 @@ def decode_sequence(input_seq):
 
     return decoded_sentence
 
-def sample(preds, temperature=0.9):
+def sample(preds, temperature=1.0):
     preds = np.asarray(preds).astype('float64')
     preds = np.log(preds) / temperature
     exp_preds = np.exp(preds)
@@ -114,8 +114,14 @@ def sample(preds, temperature=0.9):
     probas = np.random.multinomial(1, preds, 1)
     return np.argmax(probas)
 
+input_log = []
+output_log = []
+
+print('Write on kayboard or press q to quit')
 while True:
     inp = input()
+    if str(inp) == 'q':
+        break
     input_texts = ['\t' + str(inp) + '\n']
     for i, input_text in enumerate(input_texts):
         for t, char in enumerate(input_text):
@@ -123,3 +129,8 @@ while True:
     
     decoded_sentence = decode_sequence(encoder_input_data)
     print(decoded_sentence)
+    input_log.append(inp)
+    output_log.append(decoded_sentence)
+
+print(input_log)
+print(output_log)
