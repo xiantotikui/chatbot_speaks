@@ -56,7 +56,7 @@ decoder_inputs = Input(shape=(None, num_decoder_tokens))
 decoder_lstm = LSTM(latent_dim*2, return_sequences=True, return_state=True)
 decoder_outputs, _, _ = decoder_lstm(decoder_inputs,
                                      initial_state=encoder_states)
-decoder_dense = TimeDistributed(Dense(num_decoder_tokens, activation='softmax'))
+decoder_dense = Dense(num_decoder_tokens, activation='softmax')
 decoder_outputs = decoder_dense(decoder_outputs)
 
 model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
@@ -106,7 +106,7 @@ def decode_sequence(input_seq):
 
     return decoded_sentence
 
-def sample(preds, temperature=1.0):
+def sample(preds, temperature=0.5):
     preds = np.asarray(preds).astype('float64')
     preds = np.log(preds) / temperature
     exp_preds = np.exp(preds)
@@ -117,7 +117,7 @@ def sample(preds, temperature=1.0):
 input_log = []
 output_log = []
 
-print('Write on kayboard or press q to quit')
+print('Write on kayboard or enter q to quit')
 while True:
     inp = input()
     if str(inp) == 'q':

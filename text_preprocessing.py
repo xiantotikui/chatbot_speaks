@@ -1,27 +1,35 @@
 import pickle
+import json
 
-SENTENCE_START_TOKEN = "\t"
-SENTENCE_END_TOKEN = "\n"
-min_sent_characters=0
+SENTENCE_START_TOKEN = "<START>"
+SENTENCE_END_TOKEN = "<END>"
+
+with open('./data/Frames-dataset/frames.json') as f:
+    dialogues = json.load(f)
 
 sentences = []
+for text in dialogues:
+    for point in text['turns']:
+        sentences.append([point['author'], point['text']])
 
-with open('./data/RNN-twitter/tweets.txt', 'rt') as f:
-    txt = f.read()
-    txt = txt.split('\n')
-    txt = [line.split(' |') for line in txt]
-    txt.pop()
-    txt.pop()
-    for line in txt: line.pop()
-    txt = [s for s in txt if len(s) >= min_sent_characters]
-    for words in txt:
-        for word in words:
-            tmp = word.replace("'", "").replace("\"", "").split()
-            tmp.pop(0)
-            sentences.append(SENTENCE_START_TOKEN + ' '.join(tmp) + SENTENCE_END_TOKEN)
+user = []
+wizard = []
 
-even = sentences[0:][::2]
-odd = sentences[1:][::2]
+tmp0 = []
+tmp1 = []
 
+for sentence in sentences:
+    if sentence[0] == 'user':
+        tmp0.append(sentence[1])
+        wizard.append(SENTENCE_START_TOKEN + ' '.join(tmp1) + SENTENCE_END_TOKEN)
+        tmp1 = []
+    else:
+        tmp1.append(sentence[1])
+        user.append(SENTENCE_START_TOKEN + ' '.join(tmp0) + SENTENCE_END_TOKEN)
+        tmp0 = []
+wizard.pop(0)
+ 
 with open('vect.pb', 'wb') as fp:
-    pickle.dump([even, odd], fp)
+    pickle.dump([user, wizard], fp)
+
+
