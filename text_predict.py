@@ -8,17 +8,18 @@ import pickle
 
 WEIGHTS = './weights/s2s.final.hdf5'
 
+
 batch_size = 32
 epochs = 100
-latent_dim = 256
+latent_dim = 128
 
 input_characters = set()
 target_characters = set()
 with open('vect.pb', 'rb') as fp:
     vect = pickle.load(fp)
 
-input_texts = vect[0]
-target_texts = vect[1]
+input_texts = vect[0][0:1000]
+target_texts = vect[1][0:1000]
 for text in input_texts:
     for char in text:
         if char not in input_characters:
@@ -39,10 +40,24 @@ input_token_index = dict(
     [(char, i) for i, char in enumerate(input_characters)])
 target_token_index = dict(
     [(char, i) for i, char in enumerate(target_characters)])
-    
+
 encoder_input_data = np.zeros(
     (len(input_texts), max_encoder_seq_length, num_encoder_tokens),
     dtype='float32')
+decoder_input_data = np.zeros(
+    (len(input_texts), max_decoder_seq_length, num_decoder_tokens),
+    dtype='float32')
+decoder_target_data = np.zeros(
+    (len(input_texts), max_decoder_seq_length, num_decoder_tokens),
+    dtype='float32')
+
+for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
+    for t, char in enumerate(input_text):
+        encoder_input_data[i, t, input_token_index[char]] = 1.
+    for t, char in enumerate(target_text):
+        decoder_input_data[i, t, target_token_index[char]] = 1.
+        if t > 0:
+            decoder_target_data[i, t - 1, target_token_index[char]] = 1.
 
 encoder_inputs = Input(shape=(None, num_encoder_tokens))
 encoder = Bidirectional(LSTM(latent_dim, return_state=True))
@@ -84,7 +99,7 @@ def decode_sequence(input_seq):
     states_value = encoder_model.predict(input_seq)
 
     target_seq = np.zeros((1, 1, num_decoder_tokens))
-    target_seq[0, 0, target_token_index['\t']] = 1.
+    target_seq[0, 0, target_token_index['\n']] = 1.
 
     stop_condition = False
     decoded_sentence = ''
@@ -122,7 +137,7 @@ while True:
     inp = input()
     if str(inp) == 'q':
         break
-    input_texts = ['\t' + str(inp) + '\n']
+    input_texts = ['<START>' + str(inp) + '<END>']
     for i, input_text in enumerate(input_texts):
         for t, char in enumerate(input_text):
             encoder_input_data[i, t, input_token_index[char]] = 1.
