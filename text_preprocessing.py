@@ -1,9 +1,6 @@
 import pickle
 import json
 
-SENTENCE_START_TOKEN = "<START>"
-SENTENCE_END_TOKEN = "<END>"
-
 with open('./data/Frames-dataset/frames.json') as f:
     dialogues = json.load(f)
 
@@ -21,11 +18,11 @@ tmp1 = []
 for sentence in sentences:
     if sentence[0] == 'user':
         tmp0.append(sentence[1])
-        wizard.append(SENTENCE_START_TOKEN + ' '.join(tmp1) + SENTENCE_END_TOKEN)
+        wizard.append(' '.join(tmp1))
         tmp1 = []
     else:
         tmp1.append(sentence[1])
-        user.append(SENTENCE_START_TOKEN + ' '.join(tmp0) + SENTENCE_END_TOKEN)
+        user.append(' '.join(tmp0))
         tmp0 = []
 wizard.pop(0)
  
