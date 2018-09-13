@@ -1,6 +1,7 @@
 from keras.preprocessing.text import Tokenizer
 import pickle
 from keras.callbacks import ModelCheckpoint
+import numpy as np
 
 from attention.transformer import Transformer, LRSchedulerPerStep, LRSchedulerPerEpoch
 
@@ -12,12 +13,12 @@ targets = texts[1][0:6000]
 
 tokenizer = Tokenizer(num_words=999, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~ ', lower=True, split=' ')
 tokenizer.fit_on_texts(inputs)
-tokenizer.word_index
+indices = tokenizer.word_index
 inputs = tokenizer.texts_to_sequences(inputs)
 
 tokenizer = Tokenizer(num_words=999, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~ ', lower=True, split=' ')
 tokenizer.fit_on_texts(targets)
-tokenizer.word_index
+labels = tokenizer.word_index
 targets = tokenizer.texts_to_sequences(targets)
 
 input_max_size = max(len(sentence) for sentence in inputs)
@@ -50,12 +51,32 @@ limit = (max(input_max_size, target_max_size))
 s2s = Transformer(inputs, targets, len_limit=limit, d_model=d_model, d_inner_hid=d_inner_hid, \
 				   n_head=8, d_k=64, d_v=64, layers=2, dropout=0.1)
 
-lr_scheduler = LRSchedulerPerStep(d_model, 2000)   # there is a warning that it is slow, however, it's ok.
-#lr_scheduler = LRSchedulerPerEpoch(d_model, 2000, len(Xtrain.shape)/64)  # this scheduler only update lr per epoch
-model_saver = ModelCheckpoint('model.h5', save_best_only=True, save_weights_only=True)
+s2s.compile(optimizer='adam', fname='model.h5')
 
-s2s.compile(optimizer='adam')
+inpt = input('write: ')
+text = str(inpt).split()
 
-s2s.model.fit([Xtrain, Ytrain], None, batch_size=32, epochs=100, \
-				validation_data=([Xvalid, Yvalid], None), \
-				callbacks=[lr_scheduler, model_saver])
+array = []
+for t in text:
+	for key, value in indices.items():
+		if key == t:
+			array.append(value)
+
+while True:     
+    if len(array) < target_max_size - 1:
+        array.append(0)
+    else:
+        break
+
+prediction = s2s.predict(array, delimiter=' ')
+
+array = []
+for p in prediction:
+	for key, value in labels.items():
+		if value == int(p):
+			array.append(key)
+
+array = [x for x in array if x != 'end']
+
+print(' '.join(x for x in array))
+	
