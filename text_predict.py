@@ -10,15 +10,12 @@ with open('vect.pb', 'rb') as fp:
 
 inputs = texts[0][0:6000]
 targets = texts[1][0:6000]
+all_texts = inputs + targets
 
 tokenizer = Tokenizer(num_words=999, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~ ', lower=True, split=' ')
-tokenizer.fit_on_texts(inputs)
-indices = tokenizer.word_index
-inputs = tokenizer.texts_to_sequences(inputs)
-
-tokenizer = Tokenizer(num_words=999, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~ ', lower=True, split=' ')
-tokenizer.fit_on_texts(targets)
+tokenizer.fit_on_texts(all_texts)
 labels = tokenizer.word_index
+inputs = tokenizer.texts_to_sequences(inputs)
 targets = tokenizer.texts_to_sequences(targets)
 
 input_max_size = max(len(sentence) for sentence in inputs)
@@ -58,7 +55,7 @@ text = str(inpt).split()
 
 array = []
 for t in text:
-	for key, value in indices.items():
+	for key, value in labels.items():
 		if key == t:
 			array.append(value)
 
@@ -77,6 +74,15 @@ for p in prediction:
 			array.append(key)
 
 array = [x for x in array if x != 'end']
+
+i = 0
+while True:
+	if array[i] == array[i+1]:
+		array.pop(i)
+		i = 0
+	if i >= len(array) - 2:
+		break
+	i += 1
 
 print(' '.join(x for x in array))
 	

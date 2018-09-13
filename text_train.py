@@ -9,15 +9,12 @@ with open('vect.pb', 'rb') as fp:
 
 inputs = texts[0][0:6000]
 targets = texts[1][0:6000]
+all_texts = inputs + targets
 
 tokenizer = Tokenizer(num_words=999, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~ ', lower=True, split=' ')
-tokenizer.fit_on_texts(inputs)
-tokenizer.word_index
+tokenizer.fit_on_texts(all_texts)
+labels = tokenizer.word_index
 inputs = tokenizer.texts_to_sequences(inputs)
-
-tokenizer = Tokenizer(num_words=999, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~ ', lower=True, split=' ')
-tokenizer.fit_on_texts(targets)
-tokenizer.word_index
 targets = tokenizer.texts_to_sequences(targets)
 
 input_max_size = max(len(sentence) for sentence in inputs)
@@ -51,7 +48,7 @@ s2s = Transformer(inputs, targets, len_limit=limit, d_model=d_model, d_inner_hid
 				   n_head=8, d_k=64, d_v=64, layers=2, dropout=0.1)
 
 lr_scheduler = LRSchedulerPerStep(d_model, 2000)   # there is a warning that it is slow, however, it's ok.
-#lr_scheduler = LRSchedulerPerEpoch(d_model, 2000, len(Xtrain.shape)/64)  # this scheduler only update lr per epoch
+#lr_scheduler = LRSchedulerPerEpoch(d_model, 2000, len(Xtrain)/64)  # this scheduler only update lr per epoch
 model_saver = ModelCheckpoint('model.h5', save_best_only=True, save_weights_only=True)
 
 s2s.compile(optimizer='adam')
